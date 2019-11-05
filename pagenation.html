@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/jquery/1.7.2/jquery.min.js"></script>
+    <style>
+        .pagenation {
+            list-style: none;
+        }
+
+        .pagenation>li {
+            float: left;
+            padding: 1px 8px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .pagenation .pageItem {
+            border: 1px solid #d2d2d2;
+            margin: 5px;
+        }
+
+        .pagenation .pageItemActive {
+            border: 1px solid #0099FF;
+            margin: 5px;
+            background-color: #0099FF;
+            color: white;
+        }
+
+        .pagenation .pageItem:hover {
+            border: 1px solid #0099FF;
+            background-color: #0099FF;
+            color: white;
+        }
+
+
+
+        .pagenation .page_arrow {
+            font-size: 18px;
+            background: #fff;
+            border: 1px solid transparent;
+            margin-top: 2px;
+            width: 10px;
+        }
+
+        .pagenation .page_arrow:hover {
+            color: #0099FF;
+            background: transparent;
+            border: 1px solid transparent;
+
+        }
+
+        .pagenation .pageItemDisable {
+            color: #d2d2d2;
+            border: 1px solid transparent;
+            cursor: not-allowed;
+            user-select: none;
+
+        }
+
+        .pagenation .pageItemDisable:hover {
+            cursor: not-allowed;
+            color: #d2d2d2;
+            border: 1px solid transparent;
+
+        }
+
+        .pagenation .skipto {
+            font-size: 10px;
+            border: 1px solid #d2d2d2;
+            border-radius: 2px;
+            width: 30px;
+            font-size: 14px;
+            height: 22px;
+            margin-left: 5px
+        }
+
+        .pagenation .skipToBtnPage {
+            width: 40px;
+            height: 24px;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            background: #0099FF;
+            line-height: 24px;
+            text-align: center;
+            display: inline-block;
+            margin-left: 20px;
+            user-select: none;
+        }
+
+        .pagenation .pageItem-ellipsis {
+            float: left;
+            padding: 1px 8px;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <ul class="pagenation" maxPagePoint="5" pagetotalNum="10" id="page"></ul>
+    <script>
+
+        var page = {
+            "maxPagePoint": 5,//最多显示的页码个数
+            "pageSize": 10,//每一页显示的内容条数
+            /**
+             * 初始化分页界面
+             * @param eleId 元素的ID 不带#号
+             * @param totalNum 列表总量
+             * @param currentPage 当前页码
+             * @param callback 翻页函数 会返回一个带页码的函数
+             * cb
+             */
+            init: function (options) {
+                var totalNum = 0;
+                var currentPage = options.page;
+                this.pageId = options.eleId;  //元素ID
+                this.totalNum = options.totalNum;//总条数
+                this.callback = options.callback;//翻页回调
+                this.currentPage = currentPage || 1;//当前页
+                this.setCurrentPage();
+            },
+
+            "initWithUl": function () {
+                var totalPage = 1;
+                var pageSize = this.pageSize;
+                var totalNum = this.totalNum;
+                var currentPage = this.currentPage;
+                if (totalNum > 0) {
+                    var totalPage = totalNum % pageSize > 0 ? parseInt(totalNum / pageSize) + 1 : parseInt(totalNum / pageSize);
+                }
+                this.totalPage = totalPage;
+                var appendStr = this.getPageListModel();
+                $("#" + this.pageId).html(appendStr);
+            },
+            /**
+             * 设置列表总量和当前页码
+             * @param totalNum 列表总量
+             * @param currentPage 当前页码
+             */
+            "setCurrentPage": function (currentPage) {
+                var totalNum = this.totalNum;
+                var currentPage = currentPage;
+                this.initWithUl();
+                this.initPageEvent();
+                this.callback(currentPage);
+            },
+            updateCurrentPage: function (page) {
+                this.currentPage = page || this.currentPage;
+                this.initWithUl();
+                this.callback(this.currentPage);
+
+            },
+            // 绑定分页器事件
+            "initPageEvent": function () {
+                var _this = this;
+                var pageId = this.pageId;
+                var totalNum = this.totalNum;
+                $("#" + pageId).on("click", '.pageItem', function () {
+                    _this.updateCurrentPage($(this).attr("page-data"));
+                });
+                $("#" + pageId).on("click", '.skipToBtnPage', function () {
+                    var nubmer = $("#" + pageId + ' .skipto').val();
+                    var re = /^[1-9]+[0-9]*]*$/;
+                    if (re.test(nubmer)) {
+                        if (parseInt(nubmer) <= _this.totalPage) {
+                            _this.updateCurrentPage(parseInt(nubmer));
+                        } else {
+                            $('.skipto').val('');
+                        }
+                    } else {
+                        $('.skipto').val('');
+                    }
+                })
+
+            },
+
+            //根据总页数和当前页数生成分液器元素
+            "getPageListModel": function () {
+                var totalPage = this.totalPage;
+                var currentPage = this.currentPage * 1;
+                var maxPagePoint = this.maxPagePoint;
+                var prePage = currentPage - 1;
+                var nextPage = currentPage + 1;
+                var prePageClass = "pageItem";
+                var nextPageClass = "pageItem";
+                if (prePage <= 0) {
+                    prePageClass = "pageItemDisable";
+                }
+                if (nextPage > totalPage) {
+                    nextPageClass = "pageItemDisable";
+                }
+                var appendStr = "";
+
+                //appendStr+="<li class='"+prePageClass+"' page-data='1' page-rel='firstpage'>首页</li>";
+                //appendStr+="<li class='"+prePageClass+"' page-data='"+prePage+"' page-rel='prepage'>&lt;上一页</li>";
+
+                appendStr += "<li  class='page_arrow " + prePageClass + "' page-data='" + prePage + "' page-rel='prepage' title='上一页'><</li>";
+                var miniPageNumber = 1;
+                if (currentPage - parseInt(maxPagePoint / 2) > 0 && currentPage + parseInt(maxPagePoint / 2) <= totalPage) {
+                    miniPageNumber = currentPage - parseInt(maxPagePoint / 2);
+                } else if (currentPage - parseInt(maxPagePoint / 2) > 0 && currentPage + parseInt(maxPagePoint / 2) > totalPage) {
+                    miniPageNumber = totalPage - maxPagePoint + 1;
+                    if (miniPageNumber <= 0) {
+                        miniPageNumber = 1;
+                    }
+                }
+                var showPageNum = parseInt(maxPagePoint);
+                if (totalPage < showPageNum) {
+                    showPageNum = totalPage
+                }
+
+                //判断什么时候显示出来首尾页
+                var appendFirst = false, appendEnd = false;
+                if (miniPageNumber > 1) {
+                    appendFirst = true;
+                }
+                if ((miniPageNumber - 1 + showPageNum) < totalPage) {
+                    appendEnd = true;
+                }
+                //带省略号的首页
+                if (appendFirst) {
+                    appendStr += "<li class='pageItem' page-data='1'>1</li><span class='pageItem-ellipsis'>...</span>";
+                }
+
+                //循环显示页数
+                for (var i = 0; i < showPageNum; i++) {
+                    var pageNumber = miniPageNumber++;
+                    var itemPageClass = "pageItem";
+                    if (pageNumber == currentPage) {
+                        itemPageClass = "pageItemActive";
+                    }
+
+                    appendStr += "<li class='" + itemPageClass + "' page-data='" + pageNumber + "' page-rel='itempage'>" + pageNumber + "</li>";
+
+                }
+                //带省略号的尾页
+                if (appendEnd) {
+                    appendStr += "<span class='pageItem-ellipsis'>...</span><li class='pageItem' page-data='" + totalPage + "'>" + totalPage + "</li>";
+                }
+                appendStr += "<li  class=' page_arrow " + nextPageClass + "' page-data='" + nextPage + "' page-rel='nextpage' title='下一页'>></li>";
+                //appendStr+="<li class='"+nextPageClass+"' page-data='"+nextPage+"' page-rel='nextpage'>下一页&gt;</li>";
+                //appendStr+="<li class='"+nextPageClass+"' page-data='"+totalPage+"' page-rel='lastpage'>尾页</li>";
+                appendStr += '<li style="margin-top: 5px;height: 22px;">跳转到第<input type="text" class="skipto"/> 页'
+                    + '<div class="skipToBtnPage">跳转</div>'
+                    + '</li> ';
+                appendStr += "<div>共" + this.totalPage + " 页，每页" + this.pageSize + "，当前第" + this.currentPage + "页,共" + this.totalNum + "条记录<div>"
+                return appendStr;
+
+            }
+        }
+
+        //     $("#page").initPage(totalNum,1,function(pageNum){
+        //        console.log(pageNum);
+        //    });
+        page.init({
+            eleId: 'page',
+            totalNum: 100,
+            page: 1,
+            callback: function (page) {
+                console.log(page)
+            }
+        })
+    </script>
+
+    <!-- maxPagePoint:分页器显示多少个页。
+pageSize：每页显示多少个
+totalNum：总数 -->
+
+</body>
+
+</html>
